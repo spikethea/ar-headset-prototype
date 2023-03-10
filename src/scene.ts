@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import * as ThreeMeshUI from 'three-mesh-ui';
 import { StereoEffect } from 'three/examples/jsm/effects/StereoEffect';
 // import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { DeviceOrientationControls } from './DeviceOrientationControls.js';
