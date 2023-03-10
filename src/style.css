@@ -57,6 +57,30 @@ button {
   transform: translateY(-100vh);
 }
 
+#main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: black;
+  background: white;
+  transform: translateY(-100vh);
+  background-color: #3d3d3d;
+  width: 500px;
+  height: 500px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.cta {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  background-color: white;
+  color: black;
+  margin: 1rem;
+}
+
 #canvas-texture {
   position: absolute;
   top: 0;
