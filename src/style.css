@@ -48,7 +48,7 @@ button {
   transition: border-color 0.25s;
 }
 
-#gui {
+#gui.hide {
   position: absolute;
   top: 0;
   left: 0;
@@ -58,18 +58,23 @@ button {
 }
 
 #main {
-  position: absolute;
-  top: 0;
-  left: 0;
   color: black;
   background: white;
-  transform: translateY(-100vh);
   background-color: #3d3d3d;
-  width: 500px;
-  height: 500px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
+  width: 500px;
+  height: 500px;
+} 
+
+#main.hide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-200vh);
+  width: 500px;
+  height: 500px;
 }
 
 .cta {

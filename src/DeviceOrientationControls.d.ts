@@ -1,3 +1,3 @@
 import * as THREE from 'three';
 
-export function DeviceOrientationControls(any)
+export function DeviceOrientationControls(object: THREE.Camera);

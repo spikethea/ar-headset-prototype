@@ -1,19 +1,21 @@
 import * as THREE from 'three';
 import * as ThreeMeshUI from 'three-mesh-ui';
 import { StereoEffect } from 'three/examples/jsm/effects/StereoEffect';
-//import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { DeviceOrientationControls } from './DeviceOrientationControls.js';
 import * as ZapparThree from "@zappar/zappar-threejs";
 import html2canvas from 'html2canvas';
 
 
 export default () => {
+    const webglCanvas = document.getElementById('webgl') as HTMLCanvasElement;
     // Set up three.js in the usual way
     let scene = new THREE.Scene();
     let renderer = new THREE.WebGLRenderer({
         antialias: true,
+        canvas: webglCanvas
     });
-    document.body.appendChild(renderer.domElement);
+    //document.body.appendChild(renderer.domElement);
 
     let effect = new StereoEffect( renderer );
 	effect.setSize( window.innerWidth, window.innerHeight );
@@ -21,6 +23,8 @@ export default () => {
     // Main UI Element
     let mainUIElement = document.getElementById('main');
     if (!mainUIElement) return;
+
+    mainUIElement.classList.add('hide');
 
     html2canvas(mainUIElement).then((canvas) => {
         let canvasTexture: THREE.CanvasTexture;
@@ -52,6 +56,8 @@ export default () => {
     let lookDown = document.getElementById('gui');
     if (!lookDown) return;
 
+    lookDown.classList.add('hide');
+
     html2canvas(lookDown).then((canvas) => {
         let canvasTexture: THREE.CanvasTexture;
         const originalCanvas = document.getElementById('canvas-texture') as HTMLCanvasElement;
@@ -82,11 +88,32 @@ export default () => {
 
     // };
 
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setPixelRatio( Math.max(window.devicePixelRatio, 2) );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
     // The Zappar library needs the WebGL context to process camera images
     // Use this function to set your context
     ZapparThree.glContextSet(renderer.getContext());
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+
+    const controls = new DeviceOrientationControls(camera);
+
+    interface DeviceOrientationEventiOS extends DeviceOrientationEvent {
+        requestPermission?: () => Promise<'granted' | 'denied'>;
+    }      
+
+    const requestionDeviceOrientation = async () => {
+        window.alert('orientation');
+        const requestPermission = (DeviceOrientationEvent as unknown as DeviceOrientationEventiOS).requestPermission;
+        const iOS = typeof requestPermission === 'function';
+        if (iOS) {
+            const response = await requestPermission();
+            if (response === 'granted') {
+            // execute
+            }
+        }
+    }
 
     // Create a camera and set the scene background to the camera's backgroundTexture
     const zapparCamera =  new ZapparThree.Camera();
@@ -94,31 +121,25 @@ export default () => {
     scene.background = zapparCamera.backgroundTexture
     // Request camera permissions and start the camera
     ZapparThree.permissionRequestUI().then(granted => {
-        console.log('permissions')
-        if (granted) zapparCamera.start();
+        if (granted) {
+            zapparCamera.start();
+            requestionDeviceOrientation();
+        }
         else ZapparThree.permissionDeniedUI();
     });
-
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-
-    const controls = new OrbitControls( camera, renderer.domElement );
-
-    //controls.update() must be called after any manual changes to the camera's transform
-    controls.update();
     
     camera.position.z = 5
     // Set up a tracker, in this case an world tracker
-    let instantWorldTracker = new ZapparThree.InstantWorldTracker();
-    instantWorldTracker.setAnchorPoseFromCameraOffset(0, 0, 0);
-    let instantWorldAnchorGroup = new ZapparThree.InstantWorldAnchorGroup(zapparCamera, instantWorldTracker);
+    // let instantWorldTracker = new ZapparThree.InstantWorldTracker();
+    // instantWorldTracker.setAnchorPoseFromCameraOffset(0, 0, 0);
+    // let instantWorldAnchorGroup = new ZapparThree.InstantWorldAnchorGroup(zapparCamera, instantWorldTracker);
 
-    scene.add(instantWorldAnchorGroup);
+//    scene.add(instantWorldAnchorGroup);
 
     //Raycaster
 
     const raycaster = new THREE.Raycaster();
-    const centrePoint = new THREE.Vector2(window.innerWidth/2, window.innerHeight/2);
-    
+    let INTERSECTED: THREE.Object3D<THREE.Event> | null;
 
 
     // Plane - CanvasTexture
@@ -142,8 +163,8 @@ export default () => {
     //UI.rotateX(Math.PI * 0.5);
     
     // scene is a THREE.Scene (see three.js)
-    instantWorldAnchorGroup.add(UI);
-    instantWorldAnchorGroup.add(plane);
+    scene.add(UI);
+    scene.add(plane);
 
     // Place any 3D content you'd like tracked from the image into the trackerGroup
 
@@ -160,24 +181,30 @@ export default () => {
         // calculate objects intersecting the picking ray
         const intersects = raycaster.intersectObjects( scene.children );
 
-        console.log(intersects);
 
-        for ( let i = 0; i < intersects.length; i ++ ) {
-            if (intersects[i].object.name === 'lookDown') {
-                console.log('look')
-                intersects[i].object.material.color = new THREE.Color('red');
+
+        if (0 < intersects.length) {
+            for ( let i = 0; i < intersects.length; i ++ ) {
+                if (intersects[0].object.name === 'lookDown') {
+                    console.log(intersects[0].object);
+                    INTERSECTED = intersects[0].object;
+                    intersects[0].object.material.color = new THREE.Color('red');
+                }
             }
+        } else if (INTERSECTED) {
+            INTERSECTED.material.color = new THREE.Color('white');
+            INTERSECTED = null;
         }
 
-        effect.render(scene, camera);
-        ThreeMeshUI.update();
         controls.update();
+        effect.render(scene, camera);
+        // controls.update();
     }
     
     window.addEventListener("resize",() => {
        renderer.setSize(window.innerWidth, window.innerHeight);
        renderer.setPixelRatio( window.devicePixelRatio );
-    })
+    });
 
     // Start things off
     animate();
