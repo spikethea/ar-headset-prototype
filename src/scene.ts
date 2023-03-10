@@ -44,9 +44,10 @@ export default () => {
         ctx.canvas.width = 400;
         ctx.canvas.height = 100;
         canvasTexture = new THREE.CanvasTexture(canvas);
-
-        if (UI) {
-            UI.material.map = canvasTexture;
+        return canvasTexture;
+    }).then(texture => {
+        if (UI && texture) {
+            UI.material.map = texture;
             UI.material.needsUpdate = true;
             UI.material.color = new THREE.Color('white');
         }
@@ -76,9 +77,10 @@ export default () => {
         ctx.canvas.width = 400;
         ctx.canvas.height = 100;
         canvasTexture = new THREE.CanvasTexture(canvas);
-
-        if (plane) {
-            plane.material.map = canvasTexture;
+        return canvasTexture;
+    }).then( texture => {
+        if (plane && texture) {
+            plane.material.map = texture;
             plane.material.needsUpdate = true;
             plane.material.color = new THREE.Color('white');
         }
